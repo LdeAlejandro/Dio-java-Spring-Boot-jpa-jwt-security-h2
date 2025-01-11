@@ -1,0 +1,32 @@
+package dio.dio_spring_security_jwt_java;
+
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+public class WebSecurityConfig{
+
+        @Bean //
+        //defini usuario em memoria
+        public UserDetailsService userDetailsService() {
+
+                UserDetails = User.withUsername("alejandroa")
+                        .password("{noop}ab123") // The {noop} prefix is used to specify that the password is stored in plain text and does not require encoding
+                        .roles("USERS")
+                        .build();
+
+            return new InMemoryUserDetailsManager();
+        }
+
+
+}
