@@ -29,7 +29,7 @@ public class SecurityDatabaseService  implements UserDetailsService {
         // Percorre as autoridades do usuário
         userEntity.getRoles().forEach(role -> {
 
-            authorities.add(new SimpleGrantedAuthority("ROLE_" + role)); // Adiciona as autoridades ao conjunto de autoridades
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role)); // Adiciona as autoridades ao conjunto de autoridades do usuário
 
         });
 
