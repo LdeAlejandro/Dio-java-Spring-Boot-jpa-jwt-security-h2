@@ -1,7 +1,10 @@
-package dio.dio_spring_security_jwt_java.config;
+package dio.dio_spring_security_jwt_java.security;
 
 
+import dio.dio_spring_security_jwt_java.config.SecurityDatabaseService;
+import jakarta.servlet.Servlet;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -10,12 +13,16 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.h2.server.web.WebServlet;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -23,51 +30,49 @@ import org.springframework.security.web.SecurityFilterChain;
 public class WebSecurityConfig {
 
     @Autowired
-    private SecurityDatabaseService securityService;
+    private JWTFilter jwtFilter;
 
-    @Autowired
-    // Utilizado para configurar o gerenciador de autenticacao global
-    public void globalUserDetails(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(securityService).passwordEncoder(NoOpPasswordEncoder.getInstance());
+    @Bean
+    public BCryptPasswordEncoder encoder(){
+        return new BCryptPasswordEncoder();
     }
 
-
-        @Bean // Indica que o metodo cria um bean que será gerido pelo Spring
-        //defini usuario em memoria
-        public UserDetailsService userDetailsService() {
-
-                UserDetails user = User.withUsername("alejandroa")
-                        .password("{noop}ab123") // The {noop} prefix is used to specify that the password is stored in plain text and does not require encoding
-                        .roles("USERS")
-                        .build();
-
-                UserDetails admin = User.withUsername("admin")
-                        .password("{noop}master123") // The {noop} prefix is used to specify that the password is stored in plain text and does not require encoding
-                        .roles("MANAGERS")
-                        .build();
-
-            return new InMemoryUserDetailsManager(user, admin);
-        }
+    private static final String[] SWAGGER_WHITELIST = {
+            "/v2/api-docs",
+            "/swagger-resources",
+            "/swagger-resources/**",
+            "/configuration/ui",
+            "/configuration/security",
+            "/swagger-ui.html",
+            "/webjars/**"
+    };
 
 
 
         @Bean // Indica que o metodo cria um bean que será gerido pelo Spring
         // Define as autorizacoes para o filtro de autenticacao JWT (UsernamePasswordAuthenticationFilter)
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            System.out.println("****************************************************************");
+            System.out.println("WebSecurityConfig SecurityFilterChain");
                 http.csrf(customizer -> customizer.disable()); // Desabilita a proteção CSRF (Cross-Site Request Forgery)
               http.cors(customizer -> customizer.disable()); // Desabilita a proteção CORS (Cross-Origin Resource Sharing)
+            http.headers(headers -> headers.frameOptions(frameOptions  -> frameOptions.disable()));
+            http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
 
                 http.authorizeHttpRequests(
                         (requests) -> requests
-                                .requestMatchers("/").permitAll()
+                                .requestMatchers(SWAGGER_WHITELIST).permitAll()
+                                .requestMatchers("/h2-console/**").permitAll()
                                 .requestMatchers("/logoutpls").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/login").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/managers").hasAnyRole("MANAGERS")
+                                .requestMatchers(HttpMethod.POST, "/users").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/users").hasAnyRole("USERS", "MANAGERS")
+                                .requestMatchers(HttpMethod.GET, "/managers").hasAnyRole("MANAGERS")
                                 .anyRequest().authenticated()
                 );//.sessionManagement(session -> session
-                      //  .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                //);
+//                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+//               );
 
             //http.formLogin(Customizer.withDefaults()); // habilita de novo a pagina de form login padrao do Spring Security
             http.httpBasic(Customizer.withDefaults()); // habilita de novo a pagina de form login padrao do Spring Security para postman
@@ -76,8 +81,10 @@ public class WebSecurityConfig {
                 return http.build();
         }
 
-
-
-
-
+//    @Bean //HABILITANDO ACESSAR O H2-DATABSE NA WEB
+//    public ServletRegistrationBean h2servletRegistration(){
+//        ServletRegistrationBean registrationBean = new ServletRegistrationBean((Servlet) new WebServlet());
+//        registrationBean.addUrlMappings("/h2-console/*");
+//        return registrationBean;
+//    }
 }

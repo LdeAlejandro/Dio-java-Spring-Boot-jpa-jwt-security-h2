@@ -6,7 +6,7 @@ security.config.prefix=Bearer
 security.config.key=SECRET_KEY
 security.config.expiration=3600000
 
-logging.level.root=DEBUG
+#logging.level.root=DEBUG
 
 ##H2 Database Connection Properties
 #spring.h2.console.settings.web-allow-others=true

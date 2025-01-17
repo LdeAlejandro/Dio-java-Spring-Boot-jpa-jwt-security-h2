@@ -1,0 +1,17 @@
+package dio.dio_spring_security_jwt_java.security;
+
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
+public class JWTObject {
+    private String subject; // Username
+    private Date issuedAt; // Data de criação do token
+    private Date expiration; // Data de expiração do token
+    private List<String> roles; // Lista de permissões do usuário
+
+
+    public void setRoles(String... roles) {
+        this.roles = Arrays.asList(roles); 
+    }
+}
